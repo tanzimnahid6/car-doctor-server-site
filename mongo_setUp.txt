@@ -5,3 +5,6 @@
 5.driver
 6.get full code 
 7.tanzimnahid6    0rDehbLuw3ZvfG2G
+
+token generator 
+ require('crypto').randomBytes(64).toString('hex')

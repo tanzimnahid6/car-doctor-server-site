@@ -1,5 +1,6 @@
 const express = require("express")
 const cors = require("cors")
+const jwt = require('jsonwebtoken');
 const app = express()
 const port = process.env.PORT || 5000
 require("dotenv").config()
@@ -10,7 +11,6 @@ const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster
 //middleware========
 app.use(cors())
 app.use(express.json())
-
 app.get("/", (req, res) => {
   res.send("Doctor is running")
 })
@@ -25,6 +25,24 @@ const client = new MongoClient(uri, {
     deprecationErrors: true,
   },
 })
+//===========Verify Jwt Token function================================
+const verifyJwt = (req,res,next)=>{
+    console.log('Hitting verify jwt');
+    console.log(req.headers.authorization);
+    const authorization = req.headers.authorization
+    if(!authorization){
+      return res.status(401).send({error:true,message:'Unauthorized access'})
+    }
+    const token = authorization.split(' ')[1];
+    console.log('token inside verify jwt',token);
+    jwt.verify(token,process.env.ACCESS_TOKEN_SECRET,(error,decoded)=>{
+      if(error){
+        return res.status(403).send({error:true,message:'Unauthorized access token'}) 
+      }
+      req.decoded = decoded
+      next()
+    })
+}
 
 async function run() {
   try {
@@ -39,6 +57,20 @@ async function run() {
       const result = await serviceCollection.find().toArray()
       res.send(result)
     })
+
+    //JWT connection==== =================
+
+    app.post('/jwt',(req,res)=>{
+      const user = req.body 
+      console.log(user);
+
+      const token = jwt.sign(user,process.env.ACCESS_TOKEN_SECRET,{
+        expiresIn:'2h'
+      });
+      res.send({token})
+
+    })
+
 
     //find single data from db ============
     app.get("/services/:id", async (req, res) => {
@@ -61,7 +93,8 @@ async function run() {
     })
 
     //getting specific booking data from db=========={GET OPERATION}
-    app.get("/bookings", async (req, res) => {
+    app.get("/bookings",verifyJwt, async (req, res) => {
+     console.log("Came back after verify");
       
       let query = {}
       if (req.query?.email) {
