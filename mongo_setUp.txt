@@ -1,0 +1,7 @@
+1.go to mongodb atlas
+2.google sign in
+3.database
+4.connect
+5.driver
+6.get full code 
+7.tanzimnahid6    0rDehbLuw3ZvfG2G
